@@ -36,7 +36,7 @@ void* thread_job(void* arg)
     s.append(" has been processed");
     FILE* pipe = _popen("php version.php", "r");
     if (!pipe) {
-        std::cerr << "Ошибка при запуске PHP" << std::endl;
+        std::cerr << "Error occured when starting PHP" << std::endl;
         return NULL;
     }
     char result[128];
@@ -44,6 +44,7 @@ void* thread_job(void* arg)
     while (fgets(result, sizeof(result), pipe) != nullptr) {
         phpVersion += result;
     }
+    _pclose(pipe);
     s.append("<br>PHP version: ");
     s += phpVersion;
     const char* pchar = s.c_str();
