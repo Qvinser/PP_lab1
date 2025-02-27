@@ -103,7 +103,7 @@ int main()
 		if (err != 0) {
 			cout << "Setting stack size attribute failed: " << strerror(err)
 				<< endl;
-			exit(-1);
+			//exit(-1);
 		}
 	}
 	if (stackaddr != 0) {
@@ -111,7 +111,7 @@ int main()
 		if (err != 0) {
 			cout << "Setting stack addr attribute failed: " << strerror(err)
 				<< endl;
-			exit(-1);
+			//exit(-1);
 		}
 	}
 	if (detachstate != 0) {
@@ -119,7 +119,7 @@ int main()
 		if (err != 0) {
 			cout << "Setting detachstate attribute failed: " << strerror(err)
 				<< endl;
-			exit(-1);
+			//exit(-1);
 		}
 	}
 
