@@ -6,6 +6,7 @@
 #include <Ws2tcpip.h>
 #include <sys/types.h> 
 #include <pthread.h>
+#include <cstdlib>
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -32,8 +33,20 @@ void* thread_job(void* arg)
     }
     //Sleep(1);
     std::string s = std::to_string(request_number);
+    FILE* pipe = _popen("php version.php", "r");
+    if (!pipe) {
+        std::cerr << "Ошибка при запуске PHP" << std::endl;
+        return NULL;
+    }
+    char result[128];
+    std::string phpVersion;
+    while (fgets(result, sizeof(result), pipe) != nullptr) {
+        phpVersion += result;
+    }
+    s.append("<br>PHP version: ");
+    s += phpVersion;
     const char* pchar = s.c_str();
-    iResult = send(client_fd, pchar, sizeof(pchar)-1, NULL); /*-1:'\0'*/
+    iResult = send(client_fd, pchar, strlen(pchar), NULL); /*-1:'\0'*/
     if (iResult == SOCKET_ERROR) {
         wprintf(L"send failed with error: %d, socket: %d\n", WSAGetLastError(), client_fd);
         closesocket(client_fd);
@@ -47,6 +60,7 @@ void* thread_job(void* arg)
         return NULL;
     }
     s.clear();
+    phpVersion.clear();
     Sleep(1);
     shutdown(client_fd, SD_SEND);
     closesocket(client_fd);
