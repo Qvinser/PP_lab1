@@ -33,6 +33,7 @@ void* thread_job(void* arg)
     }
     //Sleep(1);
     std::string s = std::to_string(request_number);
+    s.append(" has been processed");
     FILE* pipe = _popen("php version.php", "r");
     if (!pipe) {
         std::cerr << "Ошибка при запуске PHP" << std::endl;
