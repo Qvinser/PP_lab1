@@ -7,7 +7,7 @@
 #include <sys/types.h> 
 #include <pthread.h>
 using namespace std;
-#pragma comment (lib, "wsock32.lib")
+#pragma comment(lib, "Ws2_32.lib")
 
 char response1[] =
 "HTTP/1.1 200 OK\n"
@@ -23,12 +23,6 @@ static int request_number = 0;
 void* thread_job(void* arg)
 {
     int client_fd = (int)arg;
-    //printf("got connection\n");
-
-    if (client_fd == -1) {
-        perror("Can't accept");
-        return 0;
-    }
     request_number += 1;
     int iResult = send(client_fd, response1, sizeof(response1)-1, NULL); /*-1:'\0'*/
     if (iResult == SOCKET_ERROR) {
@@ -56,6 +50,7 @@ void* thread_job(void* arg)
     Sleep(1);
     shutdown(client_fd, SD_SEND);
     closesocket(client_fd);
+    return NULL;
 }
 
 void err(int code, const char buff[]) {
@@ -66,8 +61,7 @@ void err(int code, const char buff[]) {
 int main()
 {
     int retval;
-    BOOL bOptVal = TRUE;
-    int bOptLen = sizeof(BOOL);
+    int one = 1;
     struct sockaddr_in svr_addr, cli_addr;
     int sin_len = sizeof(cli_addr);
     //---------------------------------------
@@ -83,7 +77,7 @@ int main()
     if (sock < 0)
         err(1, "can't open socket");
     cout << "Listen socket created" << endl;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&bOptVal, bOptLen);
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&one, sizeof(char*));
 
     int port = 12435;
     svr_addr.sin_family = AF_INET;
@@ -98,16 +92,19 @@ int main()
 
     listen(sock, 5);
     cout << "Listening..." << endl;
+    SOCKET client_fd = INVALID_SOCKET;
     while (1) {
-        int client_fd = accept(sock, (struct sockaddr*)&cli_addr, &sin_len);
-        if (client_fd == INVALID_SOCKET) {
+        client_fd = accept(sock, (struct sockaddr*)&cli_addr, &sin_len);
+        //printf("got connection\n");
+        if (client_fd < 1) {
             wprintf(L"accept failed with error: %ld\n", WSAGetLastError());
+            closesocket(client_fd);
             continue;
         }
-
         // Создание потока
-        pthread_t threads;
-        retval = pthread_create(&threads, NULL, thread_job, (int*)client_fd);
+        pthread_t thread;
+        retval = pthread_create(&thread, NULL, thread_job, (SOCKET*)client_fd);
+        //pthread_join(thread, NULL);
         // Если при создании потока произошла ошибка, выводим
         // сообщение об ошибке и прекращаем работу программы
         if (retval != 0) {
@@ -115,5 +112,7 @@ int main()
             exit(-1);
         }
     }
+    pthread_exit(NULL);
+    closesocket(sock);
     WSACleanup();
 }
