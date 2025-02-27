@@ -36,6 +36,7 @@ void* thread_job(void* arg)
         closesocket(client_fd);
         return NULL;
     }
+    //Sleep(1);
     std::string s = std::to_string(request_number);
     const char* pchar = s.c_str();
     iResult = send(client_fd, pchar, sizeof(pchar)-1, NULL); /*-1:'\0'*/
@@ -44,14 +45,15 @@ void* thread_job(void* arg)
         closesocket(client_fd);
         return NULL;
     }
+    //Sleep(1);
     iResult = send(client_fd, response2, sizeof(response2)-1, NULL); /*-1:'\0'*/
     if (iResult == SOCKET_ERROR) {
         wprintf(L"send failed with error: %d, socket: %d\n", WSAGetLastError(), client_fd);
         closesocket(client_fd);
         return NULL;
     }
-    //Sleep(5);
     s.clear();
+    Sleep(1);
     shutdown(client_fd, SD_SEND);
     closesocket(client_fd);
 }
