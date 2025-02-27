@@ -90,6 +90,7 @@ int main()
 	cin >> stacksize;
 	cout << "Введите аттрибут stacksize (0 - по умолчанию): ";
 	cin >> stackaddr;
+	// Инициализируем переменные потоков и параметров
 	pthread_t* threads = new pthread_t[threads_number];
 	thread_params* params = new thread_params[threads_number];
 	auto start = std::chrono::steady_clock::now();
@@ -125,6 +126,7 @@ int main()
 
 	// Размер векторов-объектов, над которыми будут проводиться работы
 	size_t vector_size = 1000;
+	// Инициализация векторов-объектов
 	vector<int>* vectors = new vector<int>[threads_number];
 	for (size_t n = 0; n < threads_number; n++){
 		vector<int> vector_item(vector_size);
