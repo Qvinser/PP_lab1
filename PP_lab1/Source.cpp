@@ -9,31 +9,25 @@
 using namespace std;
 
 struct thread_params {
-	void (*reduce)(void* arg); 
-	void* item;
-	int thread_number;
-	bool show_params;
+	void (*reduce)(void* arg, int from, int to); // функци-обработчик
+	void* item;			// объект, который нужно обработать
+	int thread_number;	// порядковый номер потока
+	int from;			// индекс в массиве, с которого поток начинает обработку
+	int to; 			// индекс в массиве, в котором поток заканчивает обработку
+	bool show_params;	// флаг - нужно ли отображать переданные параметры
 };
 
 
 template<typename T>
-void BubbleSort(void* arg)
+void increment(void* arg, int from, int to)
 {
 	std::vector<T>* vec = (vector<T>*) arg;
-	bool swapped;
-	for (size_t i = 0; i < vec->size(); ++i)
+	for (size_t i = from; i < to && i < vec->size(); i+=1)
 	{
-		swapped = false;
-		for (size_t j = 0; j < vec->size() - i - 1; ++j)
-		{
-			if ((*vec)[j] > (*vec)[j + 1]) {
-				std::swap((*vec)[j], (*vec)[j + 1]);
-				swapped = true;
-			}
-		}
-		if (!swapped) {
-			break;
-		}
+		(*vec)[i] += 1;
+		(*vec)[i] -= 1;
+		(*vec)[i] *= 3;
+		(*vec)[i] *= (*vec)[i];
 	}
 }
 
@@ -62,10 +56,12 @@ void* thread_job(void* arg)
 		//	"stacksize:	" << stacksize << endl << endl;
 		cout << "Thread#" << params->thread_number << " has parameters: " << endl <<
 			"reduce pointer:	" << (int)params->reduce << endl <<
+			"from:	" << (int)params->from << endl <<
+			"to:	" << (int)params->to << endl <<
 			"item pointer:	" << (int)params->item << endl << endl;
 		//pthread_attr_destroy(&self_attr);
 	}
-	params->reduce(params->item);
+	params->reduce(params->item, params->from, params->to);
 	return NULL;
 }
 int main()
@@ -93,7 +89,6 @@ int main()
 	// Инициализируем переменные потоков и параметров
 	pthread_t* threads = new pthread_t[threads_number];
 	thread_params* params = new thread_params[threads_number];
-	auto start = std::chrono::steady_clock::now();
 	pthread_attr_t threads_attr;
 	if ((err = pthread_attr_init(&threads_attr)) != 0) {
 		cout << "Не получилось инициализировать аттрибуты: " << strerror(err) << endl;
@@ -124,24 +119,22 @@ int main()
 		}
 	}
 
-	// Размер векторов-объектов, над которыми будут проводиться работы
-	size_t vector_size = 1000;
-	// Инициализация векторов-объектов
-	vector<int>* vectors = new vector<int>[threads_number];
-	for (size_t n = 0; n < threads_number; n++){
-		vector<int> vector_item(vector_size);
-		for (size_t i = 0; i < vector_size; i++)
-		{
-			vector_item[i] = rand() % vector_size;
-		} 
-		vectors[n] = vector_item;
+	// Размер вектора-объекта, над которым будут проводиться работы
+	size_t vector_size = 10000000;
+	vector<int> vector_item(vector_size);
+	// Инициализация вектора
+	for (size_t n = 0; n < vector_size; n++){
+		vector_item[n] = rand() % vector_size;
 	}
 
+	auto start = std::chrono::steady_clock::now();
 	for (size_t n = 0; n < threads_number; n++) {
 		// Инициализация параметров
 		params[n].show_params = show_params;
-		params[n].reduce = BubbleSort<int>;
-		params[n].item = &(vectors[n]);
+		params[n].reduce = increment<int>;
+		params[n].item = &vector_item;
+		params[n].from = vector_size / threads_number * n;
+		params[n].to = vector_size / threads_number * (n+1);
 		params[n].thread_number = n;
 		// Создание потока
 		err = pthread_create(&threads[n], &threads_attr, thread_job, &params[n]);
@@ -158,7 +151,7 @@ int main()
 	auto end1 = std::chrono::steady_clock::now();
 	std::chrono::duration<double> elapsed1 = end1 - start;
 	cout << "Все потоки были запущены за " << elapsed1.count() << " seconds." << endl;
-
+	
 	// Ожидаем завершения потоков
 	for (size_t n = 0; n < threads_number; n++) {
 		pthread_join(threads[n], NULL);
@@ -168,18 +161,4 @@ int main()
 	auto end2 = std::chrono::steady_clock::now();
 	std::chrono::duration<double> elapsed2 = end2 - start;
 	cout << "Все потоки завершили свою работу за " << elapsed2.count() << " seconds." << endl;
-
-	// Засекаем время, за работа будет выполнена в одном основном потоке
-	auto start_single = std::chrono::steady_clock::now();
-	for (size_t n = 0; n < threads_number; n++) {
-		vector<int> vector_item(vector_size);
-		for (size_t i = 0; i < vector_size; i++)
-		{
-			vector_item[i] = rand() % vector_size;
-		}
-		BubbleSort<int>(&vector_item);
-	};
-	auto end_single = std::chrono::steady_clock::now();
-	std::chrono::duration<double> elapsed_single = end_single - start_single;
-	cout << "Основной поток завершил работу за " << elapsed_single.count() << " seconds." << endl;
 }
