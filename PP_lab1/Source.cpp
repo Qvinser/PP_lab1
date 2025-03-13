@@ -120,7 +120,7 @@ int main()
 	}
 
 	// Размер вектора-объекта, над которым будут проводиться работы
-	size_t vector_size = 10000000;
+	size_t vector_size = 1000000;
 	vector<int> vector_item(vector_size);
 	// Инициализация вектора
 	for (size_t n = 0; n < vector_size; n++){

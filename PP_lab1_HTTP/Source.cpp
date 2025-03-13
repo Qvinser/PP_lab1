@@ -34,19 +34,19 @@ void* thread_job(void* arg)
     //Sleep(1);
     std::string s = std::to_string(request_number);
     s.append(" has been processed");
-    FILE* pipe = _popen("php version.php", "r");
-    if (!pipe) {
-        std::cerr << "Error occured when starting PHP" << std::endl;
-        return NULL;
-    }
-    char result[128];
-    std::string phpVersion;
-    while (fgets(result, sizeof(result), pipe) != nullptr) {
-        phpVersion += result;
-    }
-    _pclose(pipe);
-    s.append("<br>PHP version: ");
-    s += phpVersion;
+    //FILE* pipe = _popen("php version.php", "r");
+    //if (!pipe) {
+    //    std::cerr << "Error occured when starting PHP" << std::endl;
+    //    return NULL;
+    //}
+    //char result[128];
+    //std::string phpVersion;
+    //while (fgets(result, sizeof(result), pipe) != nullptr) {
+    //    phpVersion += result;
+    //}
+    //_pclose(pipe);
+    //s.append("<br>PHP version: ");
+    //s += phpVersion;
     const char* pchar = s.c_str();
     iResult = send(client_fd, pchar, strlen(pchar), NULL); /*-1:'\0'*/
     if (iResult == SOCKET_ERROR) {
@@ -62,7 +62,7 @@ void* thread_job(void* arg)
         return NULL;
     }
     s.clear();
-    phpVersion.clear();
+    //phpVersion.clear();
     Sleep(1);
     shutdown(client_fd, SD_SEND);
     closesocket(client_fd);
@@ -118,15 +118,19 @@ int main()
             continue;
         }
         // Создание потока
-        pthread_t thread;
-        retval = pthread_create(&thread, NULL, thread_job, (SOCKET*)client_fd);
+        
+        thread_job((SOCKET*)client_fd);
+        // 
+        //pthread_t thread;
+        //retval = pthread_create(&thread, NULL, thread_job, (SOCKET*)client_fd);
+        // 
         //pthread_join(thread, NULL);
         // Если при создании потока произошла ошибка, выводим
         // сообщение об ошибке и прекращаем работу программы
-        if (retval != 0) {
-            cout << "Не получилось создать поток: " << strerror(retval) << endl;
-            exit(-1);
-        }
+        //if (retval != 0) {
+        //    cout << "Не получилось создать поток: " << strerror(retval) << endl;
+        //    exit(-1);
+        //}
     }
     pthread_exit(NULL);
     closesocket(sock);
